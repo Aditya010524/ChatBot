@@ -11,6 +11,34 @@
   body {
     background: #ccc;
   }
+  #wallet-container {
+    position: absolute;
+    top: 10px;
+    right: 20px;
+    background: #222;
+    color: white;
+    padding: 8px 12px;
+    border-radius: 5px;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+#connect-wallet {
+    background: #4CAF50;
+    color: white;
+    border: none;
+    padding: 5px 10px;
+    cursor: pointer;
+    border-radius: 3px;
+    font-size: 12px;
+}
+
+#connect-wallet:hover {
+    background: #45a049;
+}
+
   body .card {
     height: 45vw;
     width: 35vw;
