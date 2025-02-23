@@ -1,3 +1,6 @@
+// Load Aptos SDK via CDN
+const aptos = window.aptos; 
+
 const userMessage = [
     ["hi", "hey", "hello"],
     ["sure", "yes", "no"],
@@ -9,14 +12,7 @@ const userMessage = [
     ["how old are you"],
     ["who are you", "are you human", "are you bot", "are you human or bot"],
     ["who created you", "who made you", "who is your creator"],
-  
-    [
-      "your name please",
-      "your name",
-      "may i know your name",
-      "what is your name",
-      "what call yourself"
-    ],
+    ["your name please", "your name", "may i know your name", "what is your name", "what call yourself"],
     ["i love you"],
     ["happy", "good", "fun", "wonderful", "fantastic", "cool", "very good"],
     ["bad", "bored", "tired"],
@@ -31,28 +27,19 @@ const userMessage = [
     ["i dont know"],
     ["boring"],
     ["im tired"]
-  ];
-  const botReply = [
+];
+
+const botReply = [
     ["Hello!", "Hi!", "Hey!", "Hi there!"],
     ["Okay"],
     ["Yes I am! "],
     ["I'm sorry about that. But I like you dude."],
-    [
-      "Fine... how are you?",
-      "Pretty well, how are you?",
-      "Fantastic, how are you?"
-    ],
+    ["Fine... how are you?", "Pretty well, how are you?", "Fantastic, how are you?"],
     ["Getting better. There?", "Somewhat okay!", "Yeah fine. Better stay home!"],
-  
-    [
-      "Nothing much",
-      "About to go to sleep",
-      "Can you guess?",
-      "I don't know actually"
-    ],
+    ["Nothing much", "About to go to sleep", "Can you guess?", "I don't know actually"],
     ["I am always young."],
     ["I am just a bot", "I am a bot. What are you?"],
-    ["Sabitha Kuppusamy"],
+    ["Aditya Tiwari"],
     ["I am nameless", "I don't have a name"],
     ["I love you too", "Me too"],
     ["Have you ever felt bad?", "Glad to hear it"],
@@ -68,19 +55,13 @@ const userMessage = [
     ["Say something interesting"],
     ["Sorry for that. Let's chat!"],
     ["Take some rest, Dude!"]
-  ];
-  
-  const alternative = [
-    "Same here, dude.",
-    "That's cool! Go on...",
-    "Dude...",
-    "Ask something else...",
-    "Hey, I'm listening..."
-  ];
-  
-  const synth = window.speechSynthesis;
-  
-  function voiceControl(string) {
+];
+
+const alternative = ["Same here, dude.", "That's cool! Go on...", "Dude...", "Ask something else...", "Hey, I'm listening..."];
+
+const synth = window.speechSynthesis;
+
+function voiceControl(string) {
     let u = new SpeechSynthesisUtterance(string);
     u.text = string;
     u.lang = "en-aus";
@@ -88,98 +69,113 @@ const userMessage = [
     u.rate = 1;
     u.pitch = 1;
     synth.speak(u);
-  }
-  
-  function sendMessage() {
+}
+
+async function getAptosBalance(walletAddress) {
+    const { AptosClient } = window.aptos;
+    const client = new AptosClient("https://fullnode.mainnet.aptoslabs.com");
+
+    try {
+        const resources = await client.getAccountResources(walletAddress);
+        const balanceResource = resources.find(r => r.type === "0x1::coin::CoinStore<0x1::aptos_coin::AptosCoin>");
+
+        if (balanceResource) {
+            const balance = balanceResource.data.coin.value / 1e8; // Convert to APT
+            return `Wallet Balance: ${balance} APT`;
+        } else {
+            return "Balance not found!";
+        }
+    } catch (error) {
+        return "Invalid wallet address or network error!";
+    }
+}
+
+function sendMessage() {
     const inputField = document.getElementById("input");
     let input = inputField.value.trim();
     input != "" && output(input);
     inputField.value = "";
-  }
-  document.addEventListener("DOMContentLoaded", () => {
+}
+
+document.addEventListener("DOMContentLoaded", () => {
     const inputField = document.getElementById("input");
     inputField.addEventListener("keydown", function (e) {
-      if (e.code === "Enter") {
-        let input = inputField.value.trim();
-        input != "" && output(input);
-        inputField.value = "";
-      }
+        if (e.code === "Enter") {
+            let input = inputField.value.trim();
+            input != "" && output(input);
+            inputField.value = "";
+        }
     });
-  });
-  
-  function output(input) {
+});
+
+async function output(input) {
     let product;
-  
-    let text = input.toLowerCase().replace(/[^\w\s\d]/gi, "");
-  
-    text = text
-      .replace(/[\W_]/g, " ")
-      .replace(/ a /g, " ")
-      .replace(/i feel /g, "")
-      .replace(/whats/g, "what is")
-      .replace(/please /g, "")
-      .replace(/ please/g, "")
-      .trim();
-  
-    let comparedText = compare(userMessage, botReply, text);
-  
-    product = comparedText
-      ? comparedText
-      : alternative[Math.floor(Math.random() * alternative.length)];
+
+    let text = input.toLowerCase().replace(/[^\w\s\d]/gi, "").trim();
+
+    // Check if the input is an Aptos balance request
+    if (text.startsWith("check balance")) {
+        let walletAddress = text.split(" ")[2]; // Get the wallet address
+        if (walletAddress) {
+            product = await getAptosBalance(walletAddress);
+        } else {
+            product = "Please enter a valid wallet address after 'Check balance'.";
+        }
+    } else {
+        let comparedText = compare(userMessage, botReply, text);
+        product = comparedText ? comparedText : alternative[Math.floor(Math.random() * alternative.length)];
+    }
+
     addChat(input, product);
-  }
-  
-  function compare(triggerArray, replyArray, string) {
+}
+
+function compare(triggerArray, replyArray, string) {
     let item;
     for (let x = 0; x < triggerArray.length; x++) {
-      for (let y = 0; y < replyArray.length; y++) {
-        if (triggerArray[x][y] == string) {
-          items = replyArray[x];
-          item = items[Math.floor(Math.random() * items.length)];
+        for (let y = 0; y < replyArray.length; y++) {
+            if (triggerArray[x][y] == string) {
+                items = replyArray[x];
+                item = items[Math.floor(Math.random() * items.length)];
+            }
         }
-      }
     }
-    //containMessageCheck(string);
     if (item) return item;
     else return containMessageCheck(string);
-  }
-  
-  function containMessageCheck(string) {
+}
+
+function containMessageCheck(string) {
     let expectedReply = [
-      [
-        "Good Bye, dude",
-        "Bye, See you!",
-        "Dude, Bye. Take care of your health in this situation."
-      ],
-      ["Good Night, dude", "Have a sound sleep", "Sweet dreams"],
-      ["Have a pleasant evening!", "Good evening too", "Evening!"],
-      ["Good morning, Have a great day!", "Morning, dude!"],
-      ["Good Afternoon", "Noon, dude!", "Afternoon, dude!"]
+        ["Good Bye, dude", "Bye, See you!", "Dude, Bye. Take care of your health in this situation."],
+        ["Good Night, dude", "Have a sound sleep", "Sweet dreams"],
+        ["Have a pleasant evening!", "Good evening too", "Evening!"],
+        ["Good morning, Have a great day!", "Morning, dude!"],
+        ["Good Afternoon", "Noon, dude!", "Afternoon, dude!"]
     ];
     let expectedMessage = [
-      ["bye", "tc", "take care"],
-      ["night", "good night"],
-      ["evening", "good evening"],
-      ["morning", "good morning"],
-      ["noon"]
+        ["bye", "tc", "take care"],
+        ["night", "good night"],
+        ["evening", "good evening"],
+        ["morning", "good morning"],
+        ["noon"]
     ];
     let item;
     for (let x = 0; x < expectedMessage.length; x++) {
-      if (expectedMessage[x].includes(string)) {
-        items = expectedReply[x];
-        item = items[Math.floor(Math.random() * items.length)];
-      }
+        if (expectedMessage[x].includes(string)) {
+            items = expectedReply[x];
+            item = items[Math.floor(Math.random() * items.length)];
+        }
     }
     return item;
-  }
-  function addChat(input, product) {
+}
+
+function addChat(input, product) {
     const mainDiv = document.getElementById("message-section");
     let userDiv = document.createElement("div");
     userDiv.id = "user";
     userDiv.classList.add("message");
     userDiv.innerHTML = `<span id="user-response">${input}</span>`;
     mainDiv.appendChild(userDiv);
-  
+
     let botDiv = document.createElement("div");
     botDiv.id = "bot";
     botDiv.classList.add("message");
@@ -188,4 +184,5 @@ const userMessage = [
     var scroll = document.getElementById("message-section");
     scroll.scrollTop = scroll.scrollHeight;
     voiceControl(product);
-  }
+}
+
